@@ -1,0 +1,143 @@
+{
+  "timestamp": "2025-11-08T11:20:00Z",
+  "file": "ui/theme/palettes.json",
+  "wcag_level": "AA+",
+  "themes": {
+    "light": {
+      "colors": {
+        "primary": "#2563eb",
+        "primary_text": "#ffffff",
+        "secondary": "#7c3aed",
+        "secondary_text": "#ffffff",
+        "background": "#ffffff",
+        "surface": "#f9fafb",
+        "text": "#111827",
+        "text_secondary": "#6b7280",
+        "border": "#e5e7eb",
+        "success": "#10b981",
+        "warning": "#f59e0b",
+        "error": "#ef4444",
+        "info": "#3b82f6"
+      },
+      "contrast_checks": [
+        {
+          "foreground": "text",
+          "background": "background",
+          "ratio": 17.74,
+          "passes_aa": true,
+          "passes_aaa": true
+        },
+        {
+          "foreground": "text",
+          "background": "surface",
+          "ratio": 16.98,
+          "passes_aa": true,
+          "passes_aaa": true
+        },
+        {
+          "foreground": "text_secondary",
+          "background": "background",
+          "ratio": 4.83,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "text_secondary",
+          "background": "surface",
+          "ratio": 4.63,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "primary_text",
+          "background": "primary",
+          "ratio": 5.17,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "secondary_text",
+          "background": "secondary",
+          "ratio": 5.7,
+          "passes_aa": true,
+          "passes_aaa": false
+        }
+      ],
+      "violations": [],
+      "warnings": [
+        "text_secondary on background: 4.83 < 7.0 (WCAG AAA)",
+        "text_secondary on surface: 4.63 < 7.0 (WCAG AAA)",
+        "primary_text on primary: 5.17 < 7.0 (WCAG AAA)",
+        "secondary_text on secondary: 5.70 < 7.0 (WCAG AAA)"
+      ]
+    },
+    "dark": {
+      "colors": {
+        "primary": "#3b82f6",
+        "primary_text": "#000000",
+        "secondary": "#8b5cf6",
+        "secondary_text": "#000000",
+        "background": "#111827",
+        "surface": "#1f2937",
+        "text": "#f9fafb",
+        "text_secondary": "#9ca3af",
+        "border": "#374151",
+        "success": "#34d399",
+        "warning": "#fbbf24",
+        "error": "#f87171",
+        "info": "#60a5fa"
+      },
+      "contrast_checks": [
+        {
+          "foreground": "text",
+          "background": "background",
+          "ratio": 16.98,
+          "passes_aa": true,
+          "passes_aaa": true
+        },
+        {
+          "foreground": "text",
+          "background": "surface",
+          "ratio": 14.05,
+          "passes_aa": true,
+          "passes_aaa": true
+        },
+        {
+          "foreground": "text_secondary",
+          "background": "background",
+          "ratio": 6.99,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "text_secondary",
+          "background": "surface",
+          "ratio": 5.78,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "primary_text",
+          "background": "primary",
+          "ratio": 5.71,
+          "passes_aa": true,
+          "passes_aaa": false
+        },
+        {
+          "foreground": "secondary_text",
+          "background": "secondary",
+          "ratio": 4.96,
+          "passes_aa": true,
+          "passes_aaa": false
+        }
+      ],
+      "violations": [],
+      "warnings": [
+        "text_secondary on background: 6.99 < 7.0 (WCAG AAA)",
+        "text_secondary on surface: 5.78 < 7.0 (WCAG AAA)",
+        "primary_text on primary: 5.71 < 7.0 (WCAG AAA)",
+        "secondary_text on secondary: 4.96 < 7.0 (WCAG AAA)"
+      ]
+    }
+  }
+}

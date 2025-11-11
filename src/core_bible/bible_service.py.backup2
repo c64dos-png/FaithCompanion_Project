@@ -1,0 +1,188 @@
+"""
+Bible Service
+Core service for Bible text retrieval and management
+"""
+
+from typing import List, Optional, Dict
+from .models import BibleVerse, BibleBook, BibleTranslation, Testament, VerseRange
+
+
+class BibleService:
+    """
+    Service for managing Bible text and retrievals
+    
+    Features:
+    - Verse retrieval by reference
+    - Chapter retrieval
+    - Book metadata management
+    - Translation support
+    """
+    
+    def __init__(self):
+        """Initialize Bible service with sample data"""
+        self._verses_db: Dict[str, BibleVerse] = {}
+        self._books: Dict[str, BibleBook] = self._initialize_books()
+        self._translations: Dict[str, BibleTranslation] = self._initialize_translations()
+    
+    def _initialize_translations(self) -> Dict[str, BibleTranslation]:
+        """Initialize supported translations"""
+        return {
+            "esv": BibleTranslation(
+                id="esv",
+                name="English Standard Version",
+                abbreviation="ESV",
+                language="en",
+                year=2001
+            ),
+            "niv": BibleTranslation(
+                id="niv",
+                name="New International Version",
+                abbreviation="NIV",
+                language="en",
+                year=1978
+            ),
+            "kjv": BibleTranslation(
+                id="kjv",
+                name="King James Version",
+                abbreviation="KJV",
+                language="en",
+                year=1611
+            )
+        }
+    
+    def _initialize_books(self) -> Dict[str, BibleBook]:
+        """Initialize Bible books metadata"""
+        books = {
+            "gen": BibleBook(id="gen", name="Genesis", abbreviation="Gen", testament=BibleTestament.OLD, order=1, chapter_count=50),
+            "exo": BibleBook(id="exo", name="Exodus", abbreviation="Exo", testament=BibleTestament.OLD, order=2, chapter_count=40),
+            "mat": BibleBook(id="mat", name="Matthew", abbreviation="Mat", testament=BibleTestament.NEW, order=40, chapter_count=28),
+            "jhn": BibleBook(id="jhn", name="John", abbreviation="Jhn", testament=BibleTestament.NEW, order=43, chapter_count=21),
+            "rom": BibleBook(id="rom", name="Romans", abbreviation="Rom", testament=BibleTestament.NEW, order=45, chapter_count=16),
+        }
+        return books
+    
+    def get_verse(self, translation_id: str, book_id: str, chapter: int, verse: int) -> Optional[BibleVerse]:
+        """
+        Get a single verse
+        
+        Args:
+            translation_id: Translation ID (e.g., 'esv')
+            book_id: Book ID (e.g., 'jhn')
+            chapter: Chapter number
+            verse: Verse number
+            
+        Returns:
+            BibleVerse or None if not found
+        """
+        key = f"{translation_id}:{book_id}:{chapter}:{verse}"
+        return self._verses_db.get(key)
+    
+    def get_verses(self, translation_id: str, verse_range: VerseRange) -> List[BibleVerse]:
+        """
+        Get multiple verses in a range
+        
+        Args:
+            translation_id: Translation ID
+            verse_range: Range of verses to retrieve
+            
+        Returns:
+            List of BibleVerses
+        """
+        verses = []
+        for verse_num in range(verse_range.start_verse, verse_range.end_verse + 1):
+            verse = self.get_verse(
+                translation_id,
+                verse_range.book_id,
+                verse_range.chapter,
+                verse_num
+            )
+            if verse:
+                verses.append(verse)
+        return verses
+    
+    def get_chapter(self, translation_id: str, book_id: str, chapter: int) -> List[BibleVerse]:
+        """
+        Get all verses in a chapter
+        
+        Args:
+            translation_id: Translation ID
+            book_id: Book ID
+            chapter: Chapter number
+            
+        Returns:
+            List of BibleVerses in the chapter
+        """
+        # In production, this would query the database efficiently
+        # For demo, we return an empty list or sample data
+        verses = []
+        for key, verse in self._verses_db.items():
+            if (verse.translation_id == translation_id and 
+                verse.book_id == book_id and 
+                verse.chapter == chapter):
+                verses.append(verse)
+        
+        return sorted(verses, key=lambda v: v.verse)
+    
+    def add_verse(self, verse: BibleVerse) -> BibleVerse:
+        """
+        Add or update a verse
+        
+        Args:
+            verse: BibleVerse to add
+            
+        Returns:
+            Added verse
+        """
+        key = f"{verse.translation_id}:{verse.book_id}:{verse.chapter}:{verse.verse}"
+        self._verses_db[key] = verse
+        return verse
+    
+    def get_book(self, book_id: str) -> Optional[BibleBook]:
+        """Get book metadata"""
+        return self._books.get(book_id)
+    
+    def get_all_books(self, testament: Optional[Testament] = None) -> List[BibleBook]:
+        """
+        Get all books, optionally filtered by testament
+        
+        Args:
+            testament: Optional testament filter
+            
+        Returns:
+            List of BibleBooks
+        """
+        books = list(self._books.values())
+        if testament:
+            books = [b for b in books if b.testament == testament]
+        return sorted(books, key=lambda b: b.order)
+    
+    def get_translation(self, translation_id: str) -> Optional[BibleTranslation]:
+        """Get translation metadata"""
+        return self._translations.get(translation_id)
+    
+    def get_all_translations(self) -> List[BibleTranslation]:
+        """Get all available translations"""
+        return list(self._translations.values())
+    
+    def search_verses(self, translation_id: str, query: str, limit: int = 50) -> List[BibleVerse]:
+        """
+        Search for verses containing query text
+        
+        Args:
+            translation_id: Translation to search
+            query: Search query
+            limit: Maximum results
+            
+        Returns:
+            List of matching BibleVerses
+        """
+        query_lower = query.lower()
+        results = []
+        
+        for verse in self._verses_db.values():
+            if verse.translation_id == translation_id and query_lower in verse.text.lower():
+                results.append(verse)
+                if len(results) >= limit:
+                    break
+        
+        return results

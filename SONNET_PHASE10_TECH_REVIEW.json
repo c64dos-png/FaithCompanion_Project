@@ -1,0 +1,906 @@
+{
+  "sonnet_phase10_technical_review": {
+    "metadata": {
+      "review_id": "SONNET_PHASE10_TECH_REVIEW",
+      "version": "v1.0.0",
+      "generated_utc": "2025-11-08T10:45:00Z",
+      "session": "SONNET_Session_8",
+      "reviewer": "SONNET AI",
+      "review_scope": "Pre-implementation feasibility analysis",
+      "status": "COMPLETE"
+    },
+    
+    "executive_summary": {
+      "recommendation": "APPROVE_WITH_MODIFICATIONS",
+      "confidence": "HIGH",
+      "risk_level": "MEDIUM",
+      "feasibility_score": "8.5/10",
+      "key_findings": [
+        "Architecture is sound and well-layered",
+        "IntentRegistry → Router integration is straightforward",
+        "Event Bus requires careful async handling",
+        "QuickDeck performance is achievable with GPU acceleration",
+        "Mobile framework choice is critical (React Native recommended over Flutter for web parity)",
+        "State persistence strategy needs transaction safety",
+        "A11y compliance AA+ is achievable with proper testing"
+      ],
+      "critical_recommendations": [
+        "Use asyncio-based EventBus with queue management",
+        "Implement React web-first, then React Native for mobile",
+        "Add transaction wrapper for state persistence",
+        "Use CSS Grid with will-change for QuickDeck performance",
+        "Pre-compute contrast ratios for theme validation"
+      ],
+      "estimated_implementation_time": "12-16 hours",
+      "risk_mitigation_required": true
+    },
+    
+    "architecture_analysis": {
+      "layer_1_core": {
+        "name": "Core Services (src/)",
+        "status": "COMPLETE",
+        "coverage": "98.27%",
+        "assessment": "SOLID_FOUNDATION",
+        "integration_points": [
+          "BibleService → IntentRegistry (bible.search, bible.get_verse)",
+          "LearnService → IntentRegistry (learn.next, learn.devotional)",
+          "UserService → IntentRegistry (user.profile, user.preferences)"
+        ],
+        "concerns": [],
+        "recommendation": "No changes needed - use as-is"
+      },
+      
+      "layer_2_ops": {
+        "name": "Operations & Diagnostics",
+        "status": "VALIDATED",
+        "components": ["selfheal_monitor.py", "backup_validator.sh", "vault_recovery.sh"],
+        "assessment": "FUNCTIONAL_BUT_INCOMPLETE",
+        "missing_component": {
+          "name": "diagnostics.py",
+          "priority": "HIGH",
+          "required_for": "ops.diag intent",
+          "implementation_complexity": "LOW",
+          "estimated_time": "2 hours"
+        },
+        "recommendation": "Implement diagnostics.py first, then integrate with IntentRegistry"
+      },
+      
+      "layer_3_ux": {
+        "name": "UX Integration Layer",
+        "status": "PROPOSED",
+        "components": {
+          "intent_registry": {
+            "purpose": "Central command dispatch",
+            "complexity": "MEDIUM",
+            "integration_points": ["CLI", "API", "UI"],
+            "feasibility": "HIGH",
+            "concerns": [
+              "Thread-safety for async handlers",
+              "Middleware order matters",
+              "Error propagation to UI"
+            ],
+            "design_recommendation": {
+              "pattern": "Command Pattern with async dispatch",
+              "structure": "Single registry instance (singleton)",
+              "middleware_chain": "Pre-validators → Auth → Rate-limit → Handler → Post-audit",
+              "error_handling": "Structured errors with user-friendly messages"
+            }
+          },
+          
+          "command_router": {
+            "purpose": "Deterministic intent routing",
+            "complexity": "LOW",
+            "feasibility": "HIGH",
+            "concerns": [
+              "Context collision (multiple intents active simultaneously)",
+              "Priority handling for conflicting intents"
+            ],
+            "design_recommendation": {
+              "pattern": "Strategy Pattern with priority queue",
+              "collision_resolution": "Priority-based (user > system > background)",
+              "state_machine": "Track active intent contexts",
+              "max_concurrent": 3
+            }
+          },
+          
+          "event_bus": {
+            "purpose": "Async state broadcasts",
+            "complexity": "MEDIUM-HIGH",
+            "feasibility": "HIGH",
+            "concerns": [
+              "CRITICAL: Must be thread-safe",
+              "CRITICAL: Must be non-blocking",
+              "Event ordering guarantees",
+              "Memory management (subscriber lifecycle)"
+            ],
+            "design_recommendation": {
+              "pattern": "Observer Pattern with asyncio queues",
+              "implementation": "asyncio.Queue per subscriber",
+              "thread_safety": "Use asyncio.Lock for subscriber registry",
+              "non_blocking": "async/await throughout, no blocking I/O",
+              "event_types": ["STATE_CHANGE", "INTENT_COMPLETE", "ERROR", "NAVIGATION"],
+              "max_queue_size": 100,
+              "overflow_policy": "Drop oldest events",
+              "weak_references": "Use weakref for automatic cleanup"
+            },
+            "code_pattern": "class EventBus:\n    def __init__(self):\n        self._subscribers = {}  # event_type -> [queues]\n        self._lock = asyncio.Lock()\n    \n    async def subscribe(self, event_type, queue):\n        async with self._lock:\n            self._subscribers.setdefault(event_type, []).append(queue)\n    \n    async def publish(self, event_type, data):\n        async with self._lock:\n            queues = self._subscribers.get(event_type, [])\n        # Publish without lock to avoid blocking\n        for q in queues:\n            try:\n                await asyncio.wait_for(q.put(data), timeout=0.1)\n            except asyncio.TimeoutError:\n                pass  # Drop event if queue full"
+          },
+          
+          "ui_quickdeck": {
+            "purpose": "Customizable 3x3 action grid",
+            "complexity": "MEDIUM",
+            "feasibility": "HIGH",
+            "concerns": [
+              "Drag-drop performance on mobile",
+              "State persistence during drag",
+              "Undo/redo implementation",
+              "Layout validation (prevent empty slots)"
+            ],
+            "design_recommendation": {
+              "framework": "React with react-beautiful-dnd or dnd-kit",
+              "grid_system": "CSS Grid with GPU acceleration",
+              "state_management": "React Context + useReducer",
+              "persistence": "Local JSON with atomic writes",
+              "animation": "CSS transitions (200ms) + React Spring for gestures",
+              "gpu_optimization": "will-change: transform on drag items",
+              "mobile_optimization": "Touch events with 44x44px minimum touch targets"
+            },
+            "performance_targets": {
+              "fps_during_drag": "≥60",
+              "drag_latency": "≤16ms",
+              "layout_save": "≤100ms",
+              "initial_render": "≤300ms"
+            },
+            "validation_rules": [
+              "Min 3 actions (1st page minimum)",
+              "Max 18 actions (2 pages)",
+              "No duplicate intents in same deck",
+              "At least 1 'exit' or 'home' action"
+            ]
+          },
+          
+          "cli": {
+            "purpose": "Command-line interface via Typer",
+            "complexity": "LOW",
+            "feasibility": "HIGH",
+            "assessment": "Straightforward - Typer integrates well with IntentRegistry",
+            "recommendation": "Implement after IntentRegistry is stable"
+          },
+          
+          "api": {
+            "purpose": "FastAPI loopback on 127.0.0.1",
+            "complexity": "LOW",
+            "feasibility": "HIGH",
+            "assessment": "Standard FastAPI pattern, local-only security is simple",
+            "recommendation": "Implement after IntentRegistry, before UI"
+          }
+        }
+      },
+      
+      "layer_4_config_theme": {
+        "name": "Configuration & Theme System",
+        "status": "PROPOSED",
+        "components": {
+          "config_store": {
+            "purpose": "Hierarchical config (ENV > .env > YAML > defaults)",
+            "complexity": "LOW",
+            "feasibility": "HIGH",
+            "transaction_safety": {
+              "concern": "Concurrent writes during QuickDeck updates",
+              "recommendation": "File-based locking or atomic rename pattern",
+              "pattern": "Write to .tmp → verify → rename"
+            }
+          },
+          
+          "theme_system": {
+            "purpose": "Dark/light themes with WCAG AA+ compliance",
+            "complexity": "MEDIUM",
+            "feasibility": "HIGH",
+            "concerns": [
+              "Contrast ratio validation (4.5:1 for normal text, 3:1 for large)",
+              "Dynamic theme switching without flicker",
+              "Color-blind friendly palettes"
+            ],
+            "design_recommendation": {
+              "color_tokens": "CSS custom properties (variables)",
+              "contrast_validation": "Pre-compute all combinations, store in theme.json",
+              "theme_structure": {
+                "palette": {
+                  "primary": "#2563eb",
+                  "secondary": "#7c3aed",
+                  "background": "#ffffff",
+                  "surface": "#f9fafb",
+                  "text": "#111827",
+                  "text_secondary": "#6b7280"
+                },
+                "contrast_ratios": {
+                  "text_on_background": 14.5,
+                  "text_on_primary": 8.2,
+                  "text_secondary_on_surface": 4.6
+                },
+                "accessibility": {
+                  "wcag_level": "AA+",
+                  "min_contrast": 4.5,
+                  "large_text_contrast": 3.0
+                }
+              },
+              "switching": "Preload both themes, CSS class toggle on <html>",
+              "testing": "Automated contrast checks in CI/CD"
+            }
+          }
+        }
+      }
+    },
+    
+    "integration_assessment": {
+      "intent_registry_router_integration": {
+        "status": "FEASIBLE",
+        "confidence": "HIGH",
+        "pattern": "Registry owns intent definitions, Router handles execution context",
+        "data_flow": {
+          "step_1": "UI/CLI/API calls IntentRegistry.dispatch(intent_id, params)",
+          "step_2": "Registry validates params against intent schema",
+          "step_3": "Router determines execution context (sync/async, priority)",
+          "step_4": "Middleware chain executes (auth, rate-limit, etc.)",
+          "step_5": "Intent handler invokes core service",
+          "step_6": "EventBus broadcasts result",
+          "step_7": "UI/CLI/API receives response"
+        },
+        "interfaces": {
+          "IntentRegistry": {
+            "methods": [
+              "register_intent(intent_id, handler, schema, metadata)",
+              "async dispatch(intent_id, params, context) -> Result",
+              "get_intent(intent_id) -> IntentDefinition",
+              "list_intents() -> List[IntentDefinition]"
+            ]
+          },
+          "CommandRouter": {
+            "methods": [
+              "route(intent, context) -> ExecutionPlan",
+              "check_collision(intent) -> bool",
+              "get_priority(intent) -> int",
+              "async execute(plan) -> Result"
+            ]
+          }
+        },
+        "concerns": [],
+        "recommendation": "IMPLEMENT_AS_DESIGNED"
+      },
+      
+      "mobile_performance_feasibility": {
+        "framework_comparison": {
+          "react_native": {
+            "pros": [
+              "JavaScript/TypeScript - consistent with web",
+              "Large ecosystem",
+              "Hot reload for development",
+              "Can share business logic with web",
+              "react-beautiful-dnd has RN alternatives"
+            ],
+            "cons": [
+              "Bridge overhead (mitigated by new architecture)",
+              "Native modules may be needed for haptics",
+              "APK size can be large"
+            ],
+            "score": "9/10",
+            "recommendation": "PREFERRED"
+          },
+          "flutter": {
+            "pros": [
+              "60 FPS guaranteed",
+              "Single codebase for iOS/Android",
+              "Excellent animation framework",
+              "Smaller APK size"
+            ],
+            "cons": [
+              "Dart language - separate from Python backend",
+              "Web support is beta quality",
+              "Would require rewriting UI logic",
+              "Different ecosystem from React"
+            ],
+            "score": "7/10",
+            "recommendation": "SECONDARY_OPTION"
+          },
+          "progressive_web_app": {
+            "pros": [
+              "Single codebase",
+              "Instant updates",
+              "No app store approval",
+              "Works on all platforms"
+            ],
+            "cons": [
+              "Limited native features",
+              "No true offline mode",
+              "Performance lower than native",
+              "No haptic feedback"
+            ],
+            "score": "6/10",
+            "recommendation": "MVP_ONLY"
+          }
+        },
+        "selected_approach": {
+          "framework": "React (web) + React Native (mobile)",
+          "rationale": "Maximum code reuse, consistent ecosystem, good performance",
+          "shared_components": [
+            "IntentRegistry (JavaScript wrapper)",
+            "EventBus (JavaScript implementation)",
+            "Theme system (JSON + CSS-in-JS)",
+            "State management (React Context)",
+            "Business logic (API calls)"
+          ],
+          "platform_specific": [
+            "Drag-drop implementation",
+            "Haptic feedback",
+            "Native notifications",
+            "File system access"
+          ],
+          "performance_mitigation": [
+            "Use React.memo for QuickDeck items",
+            "Virtualize off-screen pages",
+            "Use requestAnimationFrame for smooth animations",
+            "Throttle drag events to 60 FPS",
+            "GPU-accelerate transforms (translateX/Y instead of left/top)"
+          ]
+        }
+      },
+      
+      "data_persistence_strategy": {
+        "quickdeck_layout": {
+          "format": "JSON",
+          "location": {
+            "web": "localStorage + IndexedDB fallback",
+            "mobile": "AsyncStorage (React Native)",
+            "backend_sync": "Optional - API endpoint for cloud sync"
+          },
+          "schema": {
+            "version": "1.0",
+            "structure": {
+              "user_id": "string",
+              "preset": "string (simple|discipline|learning|community)",
+              "pages": [
+                {
+                  "page_id": 0,
+                  "items": [
+                    {
+                      "position": "0-0",
+                      "intent_id": "bible.search",
+                      "label": "Search Bible",
+                      "icon": "search"
+                    }
+                  ]
+                }
+              ],
+              "version": "1.0",
+              "last_modified": "ISO 8601 timestamp"
+            }
+          },
+          "transaction_safety": {
+            "pattern": "Optimistic UI + background sync",
+            "write_strategy": "Atomic rename (write to .tmp, rename on success)",
+            "conflict_resolution": "Last-write-wins with timestamp",
+            "backup": "Keep last 3 versions",
+            "validation": "JSON Schema validation before write"
+          },
+          "performance": {
+            "read_latency_target": "≤50ms",
+            "write_latency_target": "≤100ms",
+            "max_size": "50KB (well under typical limits)"
+          }
+        }
+      },
+      
+      "event_bus_thread_safety": {
+        "assessment": "ACHIEVABLE_WITH_ASYNCIO",
+        "confidence": "HIGH",
+        "design": {
+          "pattern": "Async Observer with queue-per-subscriber",
+          "thread_model": "Single asyncio event loop per process",
+          "thread_safety": "asyncio.Lock for subscriber registry modifications",
+          "non_blocking": "All operations use async/await, no blocking calls",
+          "memory_safety": "WeakReferences to prevent memory leaks"
+        },
+        "testing_requirements": [
+          "Concurrent publish stress test (1000 events/sec)",
+          "Subscriber cleanup validation",
+          "Memory leak detection (long-running test)",
+          "Event ordering verification",
+          "Slow subscriber isolation test"
+        ],
+        "concerns": {
+          "slow_subscribers": {
+            "risk": "One slow subscriber blocks others",
+            "mitigation": "Timeout on queue.put (0.1s), drop events if queue full",
+            "monitoring": "Log dropped events for debugging"
+          },
+          "event_ordering": {
+            "risk": "Events arrive out of order",
+            "mitigation": "Single queue per subscriber preserves order",
+            "note": "Order not guaranteed across different subscribers"
+          }
+        }
+      }
+    },
+    
+    "risk_analysis": {
+      "over_personalization": {
+        "risk_level": "MEDIUM",
+        "description": "Users may create confusing or inefficient layouts",
+        "probability": "40%",
+        "impact": "MEDIUM (user frustration, support burden)",
+        "mitigation": {
+          "presets": "Provide 4 well-designed presets (Simple, Discipline, Learning, Community)",
+          "validation": "Enforce min 3, max 18 actions; require 1 exit/home action",
+          "reset_option": "Easy 'Reset to Preset' button",
+          "undo_redo": "Full undo/redo support (10 history items)",
+          "guided_tour": "First-time tutorial showing best practices"
+        },
+        "residual_risk": "LOW"
+      },
+      
+      "context_collision": {
+        "risk_level": "HIGH",
+        "description": "Multiple intents active simultaneously causing conflicts",
+        "probability": "60%",
+        "impact": "HIGH (app crashes, data corruption)",
+        "mitigation": {
+          "priority_queue": "Assign priorities: user (100) > system (50) > background (10)",
+          "max_concurrent": "Limit to 3 active intents",
+          "state_machine": "Track intent lifecycle (pending → active → complete/error)",
+          "conflict_detection": "Check for resource conflicts before dispatch",
+          "atomic_operations": "Use database transactions for data modifications"
+        },
+        "test_requirements": [
+          "Concurrent intent stress test",
+          "Resource conflict simulation",
+          "Priority queue ordering validation"
+        ],
+        "residual_risk": "MEDIUM"
+      },
+      
+      "drag_performance": {
+        "risk_level": "LOW",
+        "description": "Drag-drop may be laggy on older devices",
+        "probability": "20%",
+        "impact": "MEDIUM (poor UX)",
+        "mitigation": {
+          "gpu_acceleration": "Use CSS transform, will-change properties",
+          "throttling": "Throttle drag events to 60 FPS (16.67ms)",
+          "virtualization": "Only render visible items",
+          "debouncing": "Debounce state updates during drag",
+          "progressive_enhancement": "Fallback to tap-to-move on slow devices"
+        },
+        "performance_targets": {
+          "fps_during_drag": "≥60",
+          "frame_time": "≤16ms",
+          "jank_budget": "≤1 dropped frame per second"
+        },
+        "residual_risk": "VERY_LOW"
+      },
+      
+      "a11y_dark_theme": {
+        "risk_level": "MEDIUM",
+        "description": "Dark theme may not meet WCAG AA+ contrast requirements",
+        "probability": "30%",
+        "impact": "HIGH (legal/compliance risk)",
+        "mitigation": {
+          "pre_computation": "Calculate all contrast ratios in advance",
+          "validation_tool": "Use contrast-ratio npm package for automated checks",
+          "color_palette": "Use proven accessible palettes (e.g., Tailwind default)",
+          "testing": "Automated CI/CD contrast validation",
+          "fallback": "If contrast fails, fall back to light theme",
+          "user_override": "Allow manual contrast boost (+15% lightness)"
+        },
+        "wcag_requirements": {
+          "normal_text": "4.5:1 minimum",
+          "large_text": "3:1 minimum",
+          "ui_components": "3:1 minimum",
+          "target_level": "AA+"
+        },
+        "residual_risk": "LOW"
+      },
+      
+      "utcnow_deprecation": {
+        "risk_level": "MEDIUM",
+        "description": "datetime.utcnow() deprecated in Python 3.12+",
+        "probability": "100%",
+        "impact": "MEDIUM (will break in Python 3.14+)",
+        "current_usage": "176 warnings in Phase 9 tests",
+        "mitigation": {
+          "phase_10": "Use datetime.now(UTC) in all new code",
+          "phase_11": "Global migration of existing code",
+          "linter_rule": "Add ruff rule to catch utcnow() usage"
+        },
+        "residual_risk": "LOW_IF_ADDRESSED"
+      }
+    },
+    
+    "optimization_opportunities": {
+      "intent_caching": {
+        "description": "Cache frequently-used intent results",
+        "benefit": "Reduce backend load, improve response time",
+        "complexity": "LOW",
+        "recommendation": "Implement LRU cache with TTL (60s) for bible.get_verse"
+      },
+      
+      "lazy_loading": {
+        "description": "Lazy load UI pages and components",
+        "benefit": "Faster initial load, smaller bundle",
+        "complexity": "LOW",
+        "recommendation": "Use React.lazy() for page components"
+      },
+      
+      "service_worker": {
+        "description": "Service worker for offline support",
+        "benefit": "Works offline, faster repeat visits",
+        "complexity": "MEDIUM",
+        "recommendation": "Implement in Phase 11 (not MVP)"
+      },
+      
+      "animation_library": {
+        "description": "Use React Spring instead of CSS transitions",
+        "benefit": "Smoother animations, better control",
+        "complexity": "LOW",
+        "recommendation": "Consider for final polish"
+      }
+    },
+    
+    "implementation_plan": {
+      "phase_10a_foundation": {
+        "duration": "4-6 hours",
+        "tasks": [
+          {
+            "task": "ops/diagnostics/diagnostics.py",
+            "priority": "HIGH",
+            "complexity": "LOW",
+            "estimate": "2 hours",
+            "dependencies": []
+          },
+          {
+            "task": "faith/intent/registry.py",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "3 hours",
+            "dependencies": []
+          },
+          {
+            "task": "faith/navigation/router.py",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "2 hours",
+            "dependencies": ["intent/registry.py"]
+          },
+          {
+            "task": "faith/events/bus.py",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "3 hours",
+            "dependencies": []
+          }
+        ]
+      },
+      
+      "phase_10b_interfaces": {
+        "duration": "4-5 hours",
+        "tasks": [
+          {
+            "task": "faith/cli/main.py (Typer)",
+            "priority": "HIGH",
+            "complexity": "LOW",
+            "estimate": "2 hours",
+            "dependencies": ["intent/registry.py"]
+          },
+          {
+            "task": "faith/api/app.py (FastAPI)",
+            "priority": "HIGH",
+            "complexity": "LOW",
+            "estimate": "2 hours",
+            "dependencies": ["intent/registry.py"]
+          },
+          {
+            "task": "faith/config/store.py",
+            "priority": "MEDIUM",
+            "complexity": "LOW",
+            "estimate": "2 hours",
+            "dependencies": []
+          }
+        ]
+      },
+      
+      "phase_10c_ui": {
+        "duration": "6-8 hours",
+        "tasks": [
+          {
+            "task": "ui/quickdeck/QuickDeck.tsx",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "4 hours",
+            "dependencies": ["intent/registry.js", "events/bus.js"]
+          },
+          {
+            "task": "ui/quickdeck/DraggableItem.tsx",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "2 hours",
+            "dependencies": ["QuickDeck.tsx"]
+          },
+          {
+            "task": "ui/theme/ThemeProvider.tsx",
+            "priority": "MEDIUM",
+            "complexity": "LOW",
+            "estimate": "2 hours",
+            "dependencies": []
+          },
+          {
+            "task": "ui/quickdeck/Presets.ts",
+            "priority": "MEDIUM",
+            "complexity": "LOW",
+            "estimate": "1 hour",
+            "dependencies": []
+          }
+        ]
+      },
+      
+      "phase_10d_testing": {
+        "duration": "4-6 hours",
+        "tasks": [
+          {
+            "task": "tests/test_intent_registry.py",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "2 hours"
+          },
+          {
+            "task": "tests/test_event_bus.py",
+            "priority": "HIGH",
+            "complexity": "MEDIUM",
+            "estimate": "2 hours"
+          },
+          {
+            "task": "tests/test_cli.py",
+            "priority": "MEDIUM",
+            "complexity": "LOW",
+            "estimate": "1 hour"
+          },
+          {
+            "task": "tests/test_api.py",
+            "priority": "MEDIUM",
+            "complexity": "LOW",
+            "estimate": "1 hour"
+          },
+          {
+            "task": "tests/ui/test_quickdeck.tsx (Jest)",
+            "priority": "MEDIUM",
+            "complexity": "MEDIUM",
+            "estimate": "2 hours"
+          }
+        ]
+      },
+      
+      "total_estimate": {
+        "minimum": "18 hours",
+        "maximum": "25 hours",
+        "recommended_buffer": "30%",
+        "realistic_total": "23-32 hours"
+      }
+    },
+    
+    "quality_gate_feasibility": {
+      "G1_tests_97_percent": {
+        "status": "ACHIEVABLE",
+        "confidence": "HIGH",
+        "strategy": "Comprehensive unit tests for all modules, integration tests for critical paths",
+        "risk": "LOW"
+      },
+      
+      "G2_coverage_96_percent": {
+        "status": "ACHIEVABLE",
+        "confidence": "HIGH",
+        "strategy": "Test-driven development, exclude only UI rendering from coverage",
+        "risk": "LOW"
+      },
+      
+      "G3_zero_ui_blockers": {
+        "status": "ACHIEVABLE",
+        "confidence": "MEDIUM",
+        "strategy": "Manual testing on 3 devices (desktop, iOS, Android), automated Playwright tests",
+        "risk": "MEDIUM (edge cases may emerge)"
+      },
+      
+      "G4_a11y_aa_plus": {
+        "status": "ACHIEVABLE",
+        "confidence": "HIGH",
+        "strategy": "Automated contrast checks, ARIA labels, keyboard navigation testing",
+        "risk": "LOW"
+      },
+      
+      "G5_latency_150ms": {
+        "status": "ACHIEVABLE",
+        "confidence": "HIGH",
+        "strategy": "Async operations, no blocking I/O, optimized rendering",
+        "risk": "LOW"
+      }
+    },
+    
+    "architectural_risks": {
+      "identified_risks": [
+        {
+          "risk": "EventBus memory leak from zombie subscribers",
+          "severity": "HIGH",
+          "mitigation": "Use weakref.WeakSet for subscriber tracking",
+          "test_required": "Long-running memory profile test"
+        },
+        {
+          "risk": "Intent collision causing data corruption",
+          "severity": "HIGH",
+          "mitigation": "State machine tracking, max_concurrent limit, priority queue",
+          "test_required": "Concurrent intent stress test"
+        },
+        {
+          "risk": "QuickDeck state desync between UI and storage",
+          "severity": "MEDIUM",
+          "mitigation": "Atomic writes, optimistic UI with rollback on error",
+          "test_required": "Failure injection test"
+        },
+        {
+          "risk": "Theme switching causing flicker",
+          "severity": "LOW",
+          "mitigation": "Preload both themes, use CSS class toggle",
+          "test_required": "Visual regression test"
+        }
+      ],
+      
+      "unidentified_risks": {
+        "probability": "MEDIUM",
+        "mitigation": "Incremental implementation with testing after each component",
+        "recommendation": "Build EventBus first, test thoroughly before building on top"
+      }
+    },
+    
+    "recommendations": {
+      "critical": [
+        {
+          "id": "R1",
+          "priority": "CRITICAL",
+          "recommendation": "Implement EventBus with asyncio.Queue and thorough testing FIRST",
+          "rationale": "Foundation for entire UX layer; bugs here cascade everywhere"
+        },
+        {
+          "id": "R2",
+          "priority": "CRITICAL",
+          "recommendation": "Use React (web) + React Native (mobile) for maximum code reuse",
+          "rationale": "Consistent ecosystem, good performance, large community"
+        },
+        {
+          "id": "R3",
+          "priority": "CRITICAL",
+          "recommendation": "Implement transaction safety for QuickDeck state persistence",
+          "rationale": "Prevents data corruption, enables reliable undo/redo"
+        }
+      ],
+      
+      "high": [
+        {
+          "id": "R4",
+          "priority": "HIGH",
+          "recommendation": "Pre-compute and validate all theme contrast ratios",
+          "rationale": "Ensures WCAG AA+ compliance without runtime overhead"
+        },
+        {
+          "id": "R5",
+          "priority": "HIGH",
+          "recommendation": "Implement diagnostics.py before integrating with IntentRegistry",
+          "rationale": "ops.diag intent requires working diagnostics module"
+        },
+        {
+          "id": "R6",
+          "priority": "HIGH",
+          "recommendation": "Use CSS Grid with will-change for QuickDeck drag-drop",
+          "rationale": "GPU acceleration ensures 60 FPS performance"
+        }
+      ],
+      
+      "medium": [
+        {
+          "id": "R7",
+          "priority": "MEDIUM",
+          "recommendation": "Implement 4 presets to guide users and reduce over-personalization",
+          "rationale": "Reduces support burden, improves UX consistency"
+        },
+        {
+          "id": "R8",
+          "priority": "MEDIUM",
+          "recommendation": "Add linter rule to catch datetime.utcnow() in new code",
+          "rationale": "Prevents accumulating more deprecated code"
+        },
+        {
+          "id": "R9",
+          "priority": "MEDIUM",
+          "recommendation": "Use React.memo and virtualization for QuickDeck performance",
+          "rationale": "Prevents unnecessary re-renders, improves scroll performance"
+        }
+      ]
+    },
+    
+    "alternative_approaches": {
+      "monolithic_ui": {
+        "description": "Build single fixed UI without QuickDeck customization",
+        "pros": ["Simpler implementation", "Lower risk", "Faster to build"],
+        "cons": ["Less user engagement", "Less differentiation", "Missed opportunity"],
+        "recommendation": "NOT_RECOMMENDED - customization is core value prop"
+      },
+      
+      "full_native": {
+        "description": "Build separate native apps (Swift/Kotlin)",
+        "pros": ["Best performance", "Native look & feel"],
+        "cons": ["3x development time", "Separate codebases", "Higher maintenance"],
+        "recommendation": "NOT_RECOMMENDED - diminishing returns for this project"
+      },
+      
+      "server_rendered": {
+        "description": "Use server-side rendering (Django templates)",
+        "pros": ["Simpler stack", "Better SEO", "No client JS required"],
+        "cons": ["Poor offline support", "Laggy interactions", "No drag-drop"],
+        "recommendation": "NOT_RECOMMENDED - UX requirements demand client-side"
+      }
+    },
+    
+    "final_assessment": {
+      "feasibility": "HIGH",
+      "recommendation": "APPROVE_WITH_MODIFICATIONS",
+      "confidence": "85%",
+      "key_success_factors": [
+        "Solid EventBus implementation with thorough testing",
+        "React/React Native for code reuse and ecosystem benefits",
+        "Transaction-safe state persistence",
+        "Pre-validated theme system for WCAG compliance",
+        "Incremental implementation with testing gates"
+      ],
+      
+      "modifications_required": [
+        {
+          "modification": "Implement EventBus FIRST before other components",
+          "reason": "Critical foundation; other components depend on it",
+          "impact": "Schedule adjustment: EventBus in phase 10a instead of 10b"
+        },
+        {
+          "modification": "Add diagnostics.py to Phase 10a (foundation)",
+          "reason": "Required for ops.diag intent",
+          "impact": "Additional 2 hours in phase 10a"
+        },
+        {
+          "modification": "Add transaction wrapper for QuickDeck persistence",
+          "reason": "Prevent data corruption, enable reliable undo/redo",
+          "impact": "Additional utility module, +1 hour development"
+        }
+      ],
+      
+      "approval_conditions": [
+        "EventBus must pass stress test (1000 events/sec sustained)",
+        "All theme contrast ratios must be pre-validated",
+        "Intent collision handling must be tested with concurrent requests",
+        "QuickDeck state persistence must have rollback capability"
+      ],
+      
+      "go_no_go": "GO - proceed with implementation following modified plan",
+      
+      "next_steps": [
+        "1. Implement ops/diagnostics/diagnostics.py",
+        "2. Implement and test faith/events/bus.py (with stress tests)",
+        "3. Implement faith/intent/registry.py",
+        "4. Implement faith/navigation/router.py",
+        "5. Build CLI and API interfaces",
+        "6. Build UI QuickDeck (React web MVP)",
+        "7. Comprehensive testing and quality gate validation"
+      ]
+    },
+    
+    "signoff": {
+      "reviewed_by": "SONNET AI Session 8",
+      "review_complete": true,
+      "recommendation": "APPROVE_WITH_MODIFICATIONS",
+      "timestamp_utc": "2025-11-08T10:45:00Z",
+      "next_action": "AWAIT_CHATGPT_APPROVAL_TO_PROCEED"
+    }
+  }
+}

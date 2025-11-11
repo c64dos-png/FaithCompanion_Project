@@ -1,0 +1,143 @@
+{
+  "timestamp": "2025-11-08T07:23:10Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "ENV_CREATE_START",
+  "status": "IN_PROGRESS",
+  "details": "Creating runtime directory"
+},
+{
+  "timestamp": "2025-11-08T07:24:01Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "VENV_CREATE",
+  "status": "SUCCESS",
+  "details": "Virtual environment created"
+},
+{
+  "timestamp": "2025-11-08T07:24:40Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "PIP_UPGRADE",
+  "status": "SUCCESS",
+  "details": "pip upgraded to latest version"
+},
+{
+  "timestamp": "2025-11-08T07:27:01Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "DEPENDENCIES_INSTALL",
+  "status": "SUCCESS",
+  "details": "All dependencies installed"
+},
+{
+  "timestamp": "2025-11-08T07:27:01Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "ENV_CREATE_COMPLETE",
+  "status": "SUCCESS",
+  "details": "Runtime environment ready"
+},
+{
+  "timestamp": "2025-11-08T07:27:01Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SOURCE_COPY_START",
+  "status": "IN_PROGRESS",
+  "details": "Copying validated source code"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SOURCE_COPY_SRC",
+  "status": "SUCCESS",
+  "details": "Files copied: 39"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SOURCE_COPY_TESTS",
+  "status": "SUCCESS",
+  "details": "Files copied: 63"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SOURCE_COPY_OPS",
+  "status": "SUCCESS",
+  "details": "Files copied: 5"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "ENV_INIT_SELFHEAL_LOGDIR",
+  "status": "SUCCESS",
+  "details": "Created artifacts/logs/selfheal"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SOURCE_COPY_COMPLETE",
+  "status": "SUCCESS",
+  "details": "Source tree copied successfully"
+},
+{
+  "timestamp": "2025-11-08T07:27:02Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SMOKE_TEST_START",
+  "status": "IN_PROGRESS",
+  "details": "Running pytest validation"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SMOKE_TEST",
+  "status": "SUCCESS",
+  "details": "All tests passed"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "SMOKE_TEST_RESULTS",
+  "status": "SUCCESS",
+  "details": "Passed: 0
+0, Failed: 0
+0"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "INTEGRITY_CHECK_START",
+  "status": "IN_PROGRESS",
+  "details": "Running validate_integrity.py"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "INTEGRITY_CHECK",
+  "status": "SKIPPED",
+  "details": "Script not available"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "ENV_CONFIG_CREATE",
+  "status": "IN_PROGRESS",
+  "details": "Generating configuration templates"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "ENV_CONFIG_CREATE",
+  "status": "SUCCESS",
+  "details": "Template created"
+},
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "REPORT_GENERATE",
+  "status": "SUCCESS",
+  "details": "Deployment report created"
+},
+{}]
+{
+  "timestamp": "2025-11-08T07:27:09Z",
+  "deployment_id": "PHASE8_DEPLOY_20251108_082057",
+  "action": "DEPLOYMENT_COMPLETE",
+  "status": "SUCCESS",
+  "details": "Phase 8 bootstrap completed successfully"
+},
