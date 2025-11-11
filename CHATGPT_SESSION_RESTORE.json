@@ -1,0 +1,41 @@
+{
+  "handover": {
+    "id": "CHATGPT_SESSION_RESTORE_v1",
+    "timestamp_utc": "2025-11-11T23:30:00Z",
+    "repository": {
+      "name": "FaithCompanion_Project",
+      "owner": "c64dos-png",
+      "visibility": "public",
+      "url": "https://github.com/c64dos-png/FaithCompanion_Project",
+      "raw_base": "https://raw.githubusercontent.com/c64dos-png/FaithCompanion_Project/main/"
+    },
+    "sync_state": {
+      "linked_agent": "SONNET",
+      "communication_mode": "GitHub dual-sync",
+      "branch": "main",
+      "phase": "10B",
+      "status": "active"
+    },
+    "next_actions": {
+      "chatgpt": [
+        "fetch SONNET_STATUS.json",
+        "verify run_master_test_suite.py integrity",
+        "await SONNET push of completed test artifacts",
+        "prepare execution plan for full test verification"
+      ],
+      "sonnet": [
+        "validate master test suite completeness",
+        "patch missing test modules (if any)",
+        "push updates and TEST_SUITE_READY flag"
+      ]
+    },
+    "security": {
+      "private_info": "none",
+      "allowed_identifier": "c64dos only",
+      "cross_project_references": "forbidden",
+      "integrity_check": "SHA256 optional"
+    },
+    "handover_ready": true,
+    "comment": "Insert this JSON in any new ChatGPT session to restore full context and sync with SONNET via GitHub."
+  }
+}
